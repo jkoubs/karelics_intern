@@ -1,11 +1,12 @@
 version: '3' # version of docker-compose
 
 services:
-  rosject:
+  rosject: # name of the container
     image: ros_galactic:latest
     container_name: turtlebot3_container
     network_mode: host
     privileged: true
+    user: root
     volumes:
       # ---------------------------------------------------------------------
       # Remember that to allow docker to public GUI tools on your computer
@@ -16,7 +17,7 @@ services:
       # things will be written at /tmp/.X11-unix/X0
       # ---------------------------------------------------------------------
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ~/karelics_ws/src/docker_ros:/catkin_ws/src/turtlebot3
+      - ~/karelics_ws/src/ros2_ws:/ros2_ws:rw
     environment: # set ENV vars
       - DISPLAY # Forward the DISPLAY variable of the host to the container
       - QT_X11_NO_MITSHM=1 # Taken from https://answers.ros.org/question/391195/using-rviz-in-docker/?answer=391504#post-id-391504
@@ -26,15 +27,20 @@ services:
     command:
       - bash
       - -c
-      - |
+      - | 
+          mkdir -p src/ && \
+          apt-get update --fix-missing && \
+          rosdep install -i --from-path src --rosdistro galactic -y && \
+          colcon build --symlink-install
           source /opt/ros/galactic/setup.bash
           source /catkin_ws/install/setup.bash
+          source /ros2_ws/install/setup.bash
           source /usr/share/gazebo/setup.sh
           terminator -u --title="Docker Container"
 
           # sleep infinity
           # terminator
-#          # roslaunch rover_autonav cali_ecst_lab.launch --screen
+          # roslaunch rover_autonav cali_ecst_lab.launch --screen
 
 
 # NOTE 1: Docker Compose takes care of creating a common NETWORK
